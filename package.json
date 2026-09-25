@@ -1,12 +1,22 @@
 {
   "name": "enterprise-rag-assistant",
   "version": "1.0.0",
-  "description": "",
+  "description": "AI-powered internal knowledge assistant that answers employee questions instantly from company documents using RAG.",
   "main": "server.js",
   "scripts": {
+    "index": "node server.js",
+    "chat": "node chat.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "rag",
+    "langchain",
+    "pinecone",
+    "groq",
+    "ollama",
+    "llm",
+    "knowledge-base"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",

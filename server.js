@@ -13,7 +13,7 @@
  * 4. Get the result from LLM
 */
 
-import { indexDocument } from "./pdf-load.jsnpm i groq-sdk --legacy-peer-deps";
+import { indexDocument } from "./pdf-load.js";
 
 const filePath = './cg-internal-docs.pdf';
 indexDocument(filePath)
