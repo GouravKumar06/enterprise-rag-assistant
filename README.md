@@ -7,6 +7,19 @@
 ![Pinecone](https://img.shields.io/badge/Pinecone-Vector%20DB-000000)
 ![Groq](https://img.shields.io/badge/Groq-LLM%20Inference-F55036)
 ![Ollama](https://img.shields.io/badge/Ollama-Local%20Embeddings-white?logo=ollama&logoColor=black)
+![Status](https://img.shields.io/badge/Phase%201-Complete-brightgreen)
+![Status](https://img.shields.io/badge/Phase%202-In%20Progress-orange)
+
+---
+
+## 🚦 Project Status
+
+| Phase | Scope | Status |
+|---|---|---|
+| **Phase 1: Core RAG Pipeline** | A working pipeline (index a PDF, retrieve, answer) running as a terminal chat over a single company document | ✅ Complete |
+| **Phase 2: Multi-Tenant Platform** | Web app where any team can upload PDF, DOCX or CSV files and chat with their own isolated data | 🚧 In progress |
+
+> This project is being **built in public**. Phase 1 proves the core retrieval and answer quality. Phase 2 turns it into a product.
 
 ---
 
@@ -46,7 +59,7 @@ Assistant: Report it within 1 hour to security@codersgyan.in, as per the Securit
 
 ---
 
-## 🎯 What We Provide
+## 🎯 What We Provide (Phase 1)
 
 | ✅ Feature | What it means for the business |
 |---|---|
@@ -54,7 +67,7 @@ Assistant: Report it within 1 hour to security@codersgyan.in, as per the Securit
 | **Grounded responses (no hallucination)** | Answers come only from official documents, and the assistant says "I don't know" when unsure |
 | **Private embeddings** | Documents are embedded **locally with Ollama**, so raw text isn't sent to a third-party embedding API |
 | **Semantic search, not keyword search** | "Can I work from home?" matches the *Remote Work Guidelines* section even without the same words |
-| **Plug in any document** | Swap in any PDF (HR handbook, SOPs, product docs, compliance manuals) and re-index |
+| **Works with any PDF** | Point the indexer at any PDF (HR handbook, SOPs, compliance manual) and re-index. Self-serve uploads arrive in Phase 2 |
 | **Scalable vector storage** | Pinecone handles anything from a few pages to thousands of documents |
 | **Fast LLM inference** | Groq's LPU inference keeps responses close to real time |
 
@@ -67,7 +80,7 @@ Assistant: Report it within 1 hour to security@codersgyan.in, as per the Securit
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Phase 1 Architecture
 
 The system has two stages: **indexing** (run once for each document update) and **querying** (the live chat).
 
@@ -208,13 +221,50 @@ You: /bye
 
 ## 🗺️ Roadmap
 
-- [ ] REST API + web chat UI (Slack / Microsoft Teams bot integration)
-- [ ] Multi-document and multi-format ingestion (DOCX, Notion, Confluence, web pages)
-- [ ] Source citations with page and section references in every answer
-- [ ] Conversation memory for follow-up questions
-- [ ] Role-based access control, so employees only see the documents they're allowed to
-- [ ] Auto re-indexing when documents are updated
-- [ ] Analytics dashboard: most-asked questions and knowledge gaps
+### ✅ Phase 1: Core RAG Pipeline (Complete)
+
+- [x] PDF loading and text extraction
+- [x] Recursive chunking with overlap
+- [x] Local embeddings with Ollama (`nomic-embed-text`)
+- [x] Vector storage and similarity search with Pinecone
+- [x] Grounded answers from the Groq LLM, which says "I don't know" when the context lacks the answer
+- [x] Interactive terminal chat
+
+**Current limitations:** single hardcoded document, terminal-only interface, single user, no authentication.
+
+### 🚧 Phase 2: Multi-Tenant Platform (In Progress)
+
+Turning the pipeline into a product that any team or company can use with its own data.
+
+- [ ] **User authentication** with signup/login and a workspace for each tenant
+- [ ] **Self-serve file upload** for PDF, DOCX and CSV
+- [ ] **Tenant data isolation:** each tenant gets its own Pinecone namespace, so nobody can query another tenant's documents
+- [ ] **REST API** (Express) for upload, indexing and chat
+- [ ] **Web frontend** with a chat UI and document management (upload, list, delete)
+- [ ] **Background indexing** with status tracking (processing, ready, failed)
+- [ ] **Source citations** showing which document and section each answer came from
+- [ ] **Conversation memory** for follow-up questions
+
+```mermaid
+flowchart LR
+    U["👤 Tenant User"] --> FE["🖥️ Web Frontend"]
+    FE --> API["⚙️ REST API + Auth"]
+    API -->|upload| ING["📥 Ingestion<br/>PDF · DOCX · CSV"]
+    ING --> EMB["Embeddings"]
+    EMB --> VDB[("🌲 Pinecone<br/>namespace per tenant")]
+    API -->|ask| RET["🔎 Retrieve from<br/>tenant namespace"]
+    VDB -.-> RET
+    RET --> LLM["⚡ Groq LLM"]
+    LLM --> FE
+```
+
+### 🔮 Future Ideas
+
+- Slack / Microsoft Teams bot integration
+- Role-based access control within a tenant
+- Connectors for Notion, Confluence and Google Drive
+- Automatic re-indexing when documents change
+- An analytics dashboard showing the most-asked questions and knowledge gaps
 
 ---
 
