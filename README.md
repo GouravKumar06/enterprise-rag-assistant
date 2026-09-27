@@ -17,7 +17,7 @@
 | Phase | Scope | Status |
 |---|---|---|
 | **Phase 1: Core RAG Pipeline** | A working pipeline (index a PDF, retrieve, answer) running as a terminal chat over a single company document | ✅ Complete |
-| **Phase 2: Multi-Tenant Platform** | Web app where any team can upload PDF, DOCX or CSV files and chat with their own isolated data | 🚧 In progress |
+| **Phase 2: Multi-User AI SaaS** | Web app where users upload documents or connect their databases and chat with their own isolated data | 🚧 In progress |
 
 > This project is being **built in public**. Phase 1 proves the core retrieval and answer quality. Phase 2 turns it into a product.
 
@@ -232,36 +232,40 @@ You: /bye
 
 **Current limitations:** single hardcoded document, terminal-only interface, single user, no authentication.
 
-### 🚧 Phase 2: Multi-Tenant Platform (In Progress)
+### 🚧 Phase 2: Multi-User AI SaaS (In Progress)
 
-Turning the pipeline into a product that any team or company can use with its own data.
+Turning the pipeline into a product where any user can chat with their own documents **and** databases.
 
-- [ ] **User authentication** with signup/login and a workspace for each tenant
-- [ ] **Self-serve file upload** for PDF, DOCX and CSV
-- [ ] **Tenant data isolation:** each tenant gets its own Pinecone namespace, so nobody can query another tenant's documents
-- [ ] **REST API** (Express) for upload, indexing and chat
-- [ ] **Web frontend** with a chat UI and document management (upload, list, delete)
-- [ ] **Background indexing** with status tracking (processing, ready, failed)
-- [ ] **Source citations** showing which document and section each answer came from
-- [ ] **Conversation memory** for follow-up questions
+📐 **Full production architecture:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+- [ ] **Authentication:** email/password + Google OAuth
+- [ ] **File uploads:** PDF, DOCX, CSV and images (OCR), processed by background workers with status tracking
+- [ ] **Per-user data isolation:** enforced in the app layer, with Postgres Row-Level Security as a second layer
+- [ ] **ChatGPT-style conversations:** sidebar history, streamed answers, follow-up questions, source citations
+- [ ] **Chat with your database:** connect PostgreSQL, MySQL or MongoDB (read-only) and ask questions in plain English
+- [ ] **AI agent** that decides whether to search documents, query a database, or both
+- [ ] **Hybrid search** (vector + keyword) on PostgreSQL + pgvector
+- [ ] **RAG evaluation suite** in CI to measure answer quality
 
 ```mermaid
 flowchart LR
-    U["👤 Tenant User"] --> FE["🖥️ Web Frontend"]
-    FE --> API["⚙️ REST API + Auth"]
-    API -->|upload| ING["📥 Ingestion<br/>PDF · DOCX · CSV"]
-    ING --> EMB["Embeddings"]
-    EMB --> VDB[("🌲 Pinecone<br/>namespace per tenant")]
-    API -->|ask| RET["🔎 Retrieve from<br/>tenant namespace"]
-    VDB -.-> RET
-    RET --> LLM["⚡ Groq LLM"]
+    U["👤 User"] --> FE["🖥️ Next.js Web App"]
+    FE --> API["⚙️ API + Auth<br/>Node.js · TypeScript"]
+    FE -. "presigned upload" .-> S3[("🪣 Object Storage")]
+    API --> Q[("⚡ Redis<br/>BullMQ")]
+    Q --> ING["📥 Ingestion Worker<br/>PDF · DOCX · CSV · Images"]
+    Q --> CON["🔌 Connector Worker<br/>read-only DB queries"]
+    ING --> PG[("🐘 PostgreSQL + pgvector")]
+    API --> PG
+    CON --> UDB[("🗄️ User DBs<br/>Postgres · MySQL · MongoDB")]
+    API --> LLM["⚡ Groq LLM<br/>agent + tool calling"]
     LLM --> FE
 ```
 
 ### 🔮 Future Ideas
 
 - Slack / Microsoft Teams bot integration
-- Role-based access control within a tenant
+- Team workspaces with shared documents and role-based access
 - Connectors for Notion, Confluence and Google Drive
 - Automatic re-indexing when documents change
 - An analytics dashboard showing the most-asked questions and knowledge gaps
