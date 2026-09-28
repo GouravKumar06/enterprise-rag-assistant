@@ -149,7 +149,7 @@ flowchart TB
 | Cache / rate limit | **Redis** | Token-bucket rate limiting, schema cache, quota counters |
 | Object storage | **S3-compatible** (Cloudflare R2 for MVP, S3 at scale) | Presigned uploads keep large files off the API |
 | LLM | **Groq** (primary) behind an `LLMProvider` interface, with a fallback provider | Very low latency. Fallback protects against outages and rate limits |
-| Embeddings | **One hosted embedding model**, the same in dev and prod, behind an `EmbeddingProvider` interface | Ollama doesn't run on free hosting. Dev and prod **must** use the same model or the vectors won't match |
+| Embeddings | **Ollama `nomic-embed-text`** (768-dim) during development → **OpenAI `text-embedding-3-small`** at deployment, behind an `EmbeddingProvider` interface | ₹0 while building. At deploy time we switch the provider in config and **re-embed** everything, because vectors from different models are not compatible |
 | Doc parsing | `pdf-parse`, `mammoth` (DOCX), **Tesseract** OCR + vision LLM captions (images) | Mature, free |
 | CSV analytics | **DuckDB** (queries Parquet on S3) | Tabular questions ("total sales by month") need SQL, not embeddings |
 | Query safety | `node-sql-parser` (SQL AST), a custom validator for Mongo pipelines | Parse queries and allow-list them before execution |
@@ -654,7 +654,7 @@ enterprise-rag-assistant/
 | D2 | **Per-user isolation, no tenants table** | Tenant/organization model | B2C product. `user_id` as partition key keeps it simple and shardable |
 | D3 | **Modular monolith + workers** | Microservices from day one | One developer. Clear module seams allow extraction later |
 | D4 | **BullMQ** | SQS, Kafka | Already known, rich features. Hidden behind a queue interface for a later swap |
-| D5 | **Hosted embedding API** | Self-hosted Ollama | Ollama needs a paid GPU/CPU server in production. The same model is used in dev and prod |
+| D5 | **Ollama in development, OpenAI embeddings in production** | Self-hosting Ollama in production, OpenAI from day one | Free while building. Self-hosting Ollama in production needs a paid server. OpenAI's `dimensions` parameter lets `text-embedding-3-small` output 768-dim vectors, so the `vector(768)` column stays the same. A one-time re-embed job runs at deploy time, since vectors from different models can't be mixed |
 | D6 | **CSV via DuckDB, not embeddings** | Embedding CSV rows | Aggregations (sum, group by) are impossible to answer correctly from embedded rows |
 | D7 | **Separate connector worker** | Run user DB queries in the API | Security isolation (SSRF, network), independent scaling, and slow user DBs can't block the API |
 | D8 | **SSE** for streaming | WebSockets | One-way streaming is all chat needs. Works over plain HTTP and load balancers |
